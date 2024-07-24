@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -21,6 +21,7 @@ pub enum TokenType {
     LessEqual,
     Greater,
     GreaterEqual,
+    String,
     Eof,
 }
 
@@ -46,6 +47,7 @@ impl std::fmt::Display for TokenType {
             TokenType::LessEqual => write!(f, "LESS_EQUAL <= null"),
             TokenType::Greater => write!(f, "GREATER > null"),
             TokenType::GreaterEqual => write!(f, "GREATER_EQUAL >= null"),
+            TokenType::String => write!(f, "STRING"),
             TokenType::Eof => write!(f, "EOF  null"),
         }
     }
@@ -53,7 +55,7 @@ impl std::fmt::Display for TokenType {
 
 pub struct Scanner<'a> {
     source: &'a str,
-    tokens: Vec<TokenType>,
+    tokens: Vec<(TokenType, String)>,
     start: usize,
     current: usize,
     line: usize,
@@ -72,13 +74,13 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<TokenType> {
+    pub fn scan_tokens(&mut self) -> &Vec<(TokenType, String)> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
 
-        self.tokens.push(TokenType::Eof);
+        self.tokens.push((TokenType::Eof, String::new()));
         &self.tokens
     }
 
@@ -137,6 +139,7 @@ impl<'a> Scanner<'a> {
                 };
                 self.add_token(token_type);
             }
+            '"' => self.string(),
             ' ' | '\r' | '\t' => {} // Ignore whitespace
             '\n' => self.line += 1,
             _ => {
@@ -173,7 +176,12 @@ impl<'a> Scanner<'a> {
     }
 
     fn add_token(&mut self, token_type: TokenType) {
-        self.tokens.push(token_type);
+        let text = self.source[self.start..self.current].to_string();
+        self.tokens.push((token_type, text));
+    }
+
+    fn add_token_with_literal(&mut self, token_type: TokenType, literal: String) {
+        self.tokens.push((token_type, literal));
     }
 
     fn is_at_end(&self) -> bool {
@@ -187,5 +195,27 @@ impl<'a> Scanner<'a> {
             self.line, c
         )
         .unwrap();
+    }
+
+    fn string(&mut self) {
+        while self.peek() != Some('"') && !self.is_at_end() {
+            if self.peek() == Some('\n') {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            writeln!(io::stderr(), "[line {}] Error: Unterminated string.", self.line).unwrap();
+            self.has_errors = true;
+            return;
+        }
+
+        // The closing ".
+        self.advance();
+
+        // Trim the surrounding quotes.
+        let value = self.source[(self.start + 1)..(self.current - 1)].to_string();
+        self.add_token_with_literal(TokenType::String, value);
     }
 }

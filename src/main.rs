@@ -3,7 +3,7 @@ mod tokenizer;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
-use tokenizer::Scanner;
+use tokenizer::{Scanner, TokenType};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,8 +27,12 @@ fn main() {
             let mut scanner = Scanner::new(&file_contents);
             let tokens = scanner.scan_tokens();
 
-            for token in tokens {
-                println!("{}", token);
+            for (token, literal) in tokens {
+                if *token == TokenType::String {
+                    println!("STRING \"{}\" {}", literal, literal);
+                } else {
+                    println!("{}", token);
+                }
             }
 
             if scanner.has_errors {
