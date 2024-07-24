@@ -4,6 +4,12 @@ pub enum TokenType {
     RightParen,
     LeftBrace,
     RightBrace,
+    Comma,
+    Dot,
+    Minus,
+    Plus,
+    Semicolon,
+    Star,
     Eof,
 }
 
@@ -14,6 +20,12 @@ impl std::fmt::Display for TokenType {
             TokenType::RightParen => write!(f, "RIGHT_PAREN ) null"),
             TokenType::LeftBrace => write!(f, "LEFT_BRACE {{ null"),
             TokenType::RightBrace => write!(f, "RIGHT_BRACE }} null"),
+            TokenType::Comma => write!(f, "COMMA , null"),
+            TokenType::Dot => write!(f, "DOT . null"),
+            TokenType::Minus => write!(f, "MINUS - null"),
+            TokenType::Plus => write!(f, "PLUS + null"),
+            TokenType::Semicolon => write!(f, "SEMICOLON ; null"),
+            TokenType::Star => write!(f, "STAR * null"),
             TokenType::Eof => write!(f, "EOF  null"),
         }
     }
@@ -41,6 +53,12 @@ impl<'a> Scanner<'a> {
                 ')' => self.tokens.push(TokenType::RightParen),
                 '{' => self.tokens.push(TokenType::LeftBrace),
                 '}' => self.tokens.push(TokenType::RightBrace),
+                ',' => self.tokens.push(TokenType::Comma),
+                '.' => self.tokens.push(TokenType::Dot),
+                '-' => self.tokens.push(TokenType::Minus),
+                '+' => self.tokens.push(TokenType::Plus),
+                ';' => self.tokens.push(TokenType::Semicolon),
+                '*' => self.tokens.push(TokenType::Star),
                 _ => {}
             }
         }
