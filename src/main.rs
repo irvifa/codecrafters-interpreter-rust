@@ -30,6 +30,10 @@ fn main() {
             for token in tokens {
                 println!("{}", token);
             }
+
+            if scanner.has_errors {
+                std::process::exit(65);
+            }
         }
         _ => {
             writeln!(io::stderr(), "Unknown command: {}", command).unwrap();
