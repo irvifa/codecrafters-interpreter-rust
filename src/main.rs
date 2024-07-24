@@ -3,7 +3,7 @@ mod tokenizer;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
-use tokenizer::{Scanner, TokenType};
+use tokenizer::Scanner;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
