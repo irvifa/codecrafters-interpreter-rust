@@ -12,6 +12,7 @@ pub enum TokenType {
     Plus,
     Semicolon,
     Star,
+    Slash,
     Bang,
     BangEqual,
     Equal,
@@ -36,6 +37,7 @@ impl std::fmt::Display for TokenType {
             TokenType::Plus => write!(f, "PLUS + null"),
             TokenType::Semicolon => write!(f, "SEMICOLON ; null"),
             TokenType::Star => write!(f, "STAR * null"),
+            TokenType::Slash => write!(f, "SLASH / null"),
             TokenType::Bang => write!(f, "BANG ! null"),
             TokenType::BangEqual => write!(f, "BANG_EQUAL != null"),
             TokenType::Equal => write!(f, "EQUAL = null"),
@@ -81,7 +83,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_token(&mut self) {
-        let c = self.advance();
+        let c = self.advance().unwrap_or('\0');
         match c {
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
@@ -93,6 +95,16 @@ impl<'a> Scanner<'a> {
             '+' => self.add_token(TokenType::Plus),
             ';' => self.add_token(TokenType::Semicolon),
             '*' => self.add_token(TokenType::Star),
+            '/' => {
+                if self.match_char('/') {
+                    // A comment goes until the end of the line.
+                    while self.peek() != Some('\n') && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
+            }
             '!' => {
                 let token_type = if self.match_char('=') {
                     TokenType::BangEqual
@@ -134,21 +146,30 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn advance(&mut self) -> char {
-        let c = self.source.chars().nth(self.current).unwrap();
-        self.current += 1;
-        c
+    fn advance(&mut self) -> Option<char> {
+        if self.is_at_end() {
+            None
+        } else {
+            let c = self.source.chars().nth(self.current);
+            self.current += 1;
+            c
+        }
     }
 
     fn match_char(&mut self, expected: char) -> bool {
+        if self.peek() == Some(expected) {
+            self.current += 1;
+            return true;
+        }
+        false
+    }
+
+    fn peek(&self) -> Option<char> {
         if self.is_at_end() {
-            return false;
+            None
+        } else {
+            self.source.chars().nth(self.current)
         }
-        if self.source.chars().nth(self.current).unwrap() != expected {
-            return false;
-        }
-        self.current += 1;
-        true
     }
 
     fn add_token(&mut self, token_type: TokenType) {
