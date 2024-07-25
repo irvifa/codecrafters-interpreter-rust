@@ -22,6 +22,7 @@ pub enum TokenType {
     Greater,
     GreaterEqual,
     String,
+    Number,
     Eof,
 }
 
@@ -48,6 +49,7 @@ impl std::fmt::Display for TokenType {
             TokenType::Greater => write!(f, "GREATER > null"),
             TokenType::GreaterEqual => write!(f, "GREATER_EQUAL >= null"),
             TokenType::String => write!(f, "STRING"),
+            TokenType::Number => write!(f, "NUMBER"),
             TokenType::Eof => write!(f, "EOF  null"),
         }
     }
@@ -55,7 +57,7 @@ impl std::fmt::Display for TokenType {
 
 pub struct Scanner<'a> {
     source: &'a str,
-    tokens: Vec<(TokenType, String)>,
+    tokens: Vec<(TokenType, String, String)>,
     start: usize,
     current: usize,
     line: usize,
@@ -74,15 +76,23 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<(TokenType, String)> {
+    pub fn scan_tokens(&mut self) -> &Vec<(TokenType, String, String)> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
-
-        self.tokens.push((TokenType::Eof, String::new()));
+    
+        // Only add EOF token if all tokens have been processed
+        if let Some(&(ref last_type, _, _)) = self.tokens.last() {
+            if *last_type != TokenType::Eof {
+                self.tokens.push((TokenType::Eof, String::new(), String::new()));
+            }
+        } else {
+            self.tokens.push((TokenType::Eof, String::new(), String::new()));
+        }
+    
         &self.tokens
-    }
+    }    
 
     fn scan_token(&mut self) {
         let c = self.advance().unwrap_or('\0');
@@ -142,9 +152,11 @@ impl<'a> Scanner<'a> {
             '"' => self.string(),
             ' ' | '\r' | '\t' => {} // Ignore whitespace
             '\n' => self.line += 1,
+            '0'..='9' => self.number(),
             _ => {
-                self.report_error(c);
-                self.has_errors = true;
+                    self.report_error(c);
+                    self.has_errors = true;
+                
             }
         }
     }
@@ -175,13 +187,21 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn add_token(&mut self, token_type: TokenType) {
-        let text = self.source[self.start..self.current].to_string();
-        self.tokens.push((token_type, text));
+    fn peek_next(&self) -> Option<char> {
+        if self.current + 1 >= self.source.len() {
+            None
+        } else {
+            self.source.chars().nth(self.current + 1)
+        }
     }
 
-    fn add_token_with_literal(&mut self, token_type: TokenType, literal: String) {
-        self.tokens.push((token_type, literal));
+    fn add_token(&mut self, token_type: TokenType) {
+        let text = self.source[self.start..self.current].to_string();
+        self.tokens.push((token_type, text.clone(), text));
+    }
+
+    fn add_token_with_literal(&mut self, token_type: TokenType, lexeme: String, literal: String) {
+        self.tokens.push((token_type, lexeme, literal));
     }
 
     fn is_at_end(&self) -> bool {
@@ -216,6 +236,32 @@ impl<'a> Scanner<'a> {
 
         // Trim the surrounding quotes.
         let value = self.source[(self.start + 1)..(self.current - 1)].to_string();
-        self.add_token_with_literal(TokenType::String, value);
+        self.add_token_with_literal(TokenType::String, format!("\"{}\"", value), value);
+    }
+
+    fn number(&mut self) {
+        while self.peek().map_or(false, |c| c.is_digit(10)) {
+            self.advance();
+        }
+    
+        // Look for a fractional part.
+        if self.peek() == Some('.') && self.peek_next().map_or(false, |c| c.is_digit(10)) {
+            // Consume the "."
+            self.advance();
+    
+            while self.peek().map_or(false, |c| c.is_digit(10)) {
+                self.advance();
+            }
+        }
+    
+        let value = &self.source[self.start..self.current];
+        let lexeme = value.to_string();
+        let literal = if value.contains('.') {
+            value.to_string()
+        } else {
+            format!("{}.0", value)
+        };
+    
+        self.add_token_with_literal(TokenType::Number, lexeme, literal);
     }
 }

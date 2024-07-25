@@ -27,11 +27,11 @@ fn main() {
             let mut scanner = Scanner::new(&file_contents);
             let tokens = scanner.scan_tokens();
 
-            for (token, literal) in tokens {
-                if *token == TokenType::String {
-                    println!("STRING \"{}\" {}", literal, literal);
-                } else {
-                    println!("{}", token);
+            for (token, lexeme, literal) in tokens {
+                match token {
+                    TokenType::String => println!("STRING {} {}", lexeme, literal),
+                    TokenType::Number => println!("NUMBER {} {}", lexeme, literal),
+                    _ => println!("{}", token),
                 }
             }
 
