@@ -338,3 +338,15 @@ impl<'a> Scanner<'a> {
         self.add_token(token_type);
     }
 }
+
+
+impl TokenType {
+    pub fn to_string_for_parse(&self) -> String {
+        match self {
+            TokenType::Bang => "!".to_string(),
+            TokenType::Minus => "-".to_string(),
+            // ... (other matches)
+            _ => format!("{:?}", self),
+        }
+    }
+}

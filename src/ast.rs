@@ -1,10 +1,12 @@
 // ast.rs
 use std::fmt;
+use crate::tokenizer::TokenType;
 
 pub enum Expr {
     Literal(LiteralValue),
     // We'll add more expression types later
     Grouping(Box<Expr>),
+    Unary(TokenType, Box<Expr>),
 }
 
 pub enum LiteralValue {
@@ -19,6 +21,7 @@ impl fmt::Display for Expr {
         match self {
             Expr::Literal(value) => write!(f, "{}", value),
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
+            Expr::Unary(operator, expr) => write!(f, "({} {})", operator.to_string_for_parse(), expr),
         }
     }
 }

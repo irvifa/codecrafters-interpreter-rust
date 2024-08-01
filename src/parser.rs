@@ -24,6 +24,16 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
+        self.unary()
+    }
+
+    fn unary(&mut self) -> Result<Expr, String> {
+        if self.match_token(&[TokenType::Bang, TokenType::Minus]) {
+            let operator = self.previous().0.clone();
+            let right = self.unary()?;
+            return Ok(Expr::Unary(operator, Box::new(right)));
+        }
+
         self.primary()
     }
 

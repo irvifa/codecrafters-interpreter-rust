@@ -1,15 +1,13 @@
-// main.rs
-mod ast;
+
 mod tokenizer;
 mod parser;
-mod ast_printer;
+mod ast;
 
 use std::env;
 use std::fs;
 use std::io::{self, Write};
-use tokenizer::{Scanner, TokenType};
-use parser::Parser;
-use ast_printer::AstPrinter;
+use crate::tokenizer::{Scanner, TokenType};
+use crate::parser::Parser;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -28,8 +26,6 @@ fn main() {
 
     match command.as_str() {
         "tokenize" => {
-            writeln!(io::stderr(), "Logs from your program will appear here!").unwrap();
-
             let mut scanner = Scanner::new(&file_contents);
             let tokens = scanner.scan_tokens();
 
@@ -51,8 +47,7 @@ fn main() {
             let mut parser = Parser::new(&file_contents);
             match parser.parse() {
                 Ok(expr) => {
-                    let printer = AstPrinter;
-                    println!("{}", printer.print(&expr));
+                    println!("{}", expr);
                 },
                 Err(e) => {
                     writeln!(io::stderr(), "Error: {}", e).unwrap();
