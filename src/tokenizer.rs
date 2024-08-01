@@ -23,6 +23,7 @@ pub enum TokenType {
     GreaterEqual,
     String,
     Number,
+    Identifier,
     Eof,
 }
 
@@ -50,6 +51,7 @@ impl std::fmt::Display for TokenType {
             TokenType::GreaterEqual => write!(f, "GREATER_EQUAL >= null"),
             TokenType::String => write!(f, "STRING"),
             TokenType::Number => write!(f, "NUMBER"),
+            TokenType::Identifier => write!(f, "IDENTIFIER"),
             TokenType::Eof => write!(f, "EOF  null"),
         }
     }
@@ -152,7 +154,8 @@ impl<'a> Scanner<'a> {
             '"' => self.string(),
             ' ' | '\r' | '\t' => {} // Ignore whitespace
             '\n' => self.line += 1,
-            '0'..='9' => self.number(),
+            _ if self.is_digit(c) => self.number(),
+            _ if self.is_alpha(c) => self.identifier(),
             _ => {
                     self.report_error(c);
                     self.has_errors = true;
@@ -240,28 +243,55 @@ impl<'a> Scanner<'a> {
     }
 
     fn number(&mut self) {
-        while self.peek().map_or(false, |c| c.is_digit(10)) {
+        while self.peek().map_or(false, |c| self.is_digit(c)) {
             self.advance();
         }
     
         // Look for a fractional part.
-        if self.peek() == Some('.') && self.peek_next().map_or(false, |c| c.is_digit(10)) {
+        let mut has_decimal = false;
+        if self.peek() == Some('.') && self.peek_next().map_or(false, |c| self.is_digit(c)) {
+            has_decimal = true;
             // Consume the "."
             self.advance();
     
-            while self.peek().map_or(false, |c| c.is_digit(10)) {
+            while self.peek().map_or(false, |c| self.is_digit(c)) {
                 self.advance();
             }
         }
     
         let value = &self.source[self.start..self.current];
         let lexeme = value.to_string();
-        let literal = if value.contains('.') {
-            value.to_string()
+        let literal = if has_decimal {
+            if value.ends_with(".00") {
+                value.trim_end_matches('0').to_string() + "0"
+            } else {
+                value.to_string()
+            }
         } else {
             format!("{}.0", value)
         };
-    
+
         self.add_token_with_literal(TokenType::Number, lexeme, literal);
+    }
+
+    fn is_digit(&self, c: char) -> bool {
+        c >= '0' && c <= '9'
+    }
+    
+    fn is_alpha(&self, c: char) -> bool {
+        c.is_alphabetic() || c == '_'
+    }
+    
+    fn is_alphanumeric(&self, c: char) -> bool {
+        c.is_alphanumeric() || c == '_'
+    }
+
+    fn identifier(&mut self) {
+        while self.peek().map_or(false, |c| self.is_alphanumeric(c)) {
+            self.advance();
+        }
+    
+        let text = &self.source[self.start..self.current];
+        self.add_token(TokenType::Identifier);
     }
 }

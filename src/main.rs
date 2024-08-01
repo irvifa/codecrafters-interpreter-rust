@@ -31,6 +31,8 @@ fn main() {
                 match token {
                     TokenType::String => println!("STRING {} {}", lexeme, literal),
                     TokenType::Number => println!("NUMBER {} {}", lexeme, literal),
+                    TokenType::Identifier => println!("IDENTIFIER {} null", lexeme),
+                    TokenType::Eof => println!("EOF  null"),
                     _ => println!("{}", token),
                 }
             }
