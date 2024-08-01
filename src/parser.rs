@@ -1,3 +1,4 @@
+// parser.rs
 use crate::ast::{Expr, LiteralValue};
 use crate::tokenizer::{TokenType, Scanner};
 
@@ -31,13 +32,13 @@ impl<'a> Parser<'a> {
             TokenType::False => Ok(Expr::Literal(LiteralValue::Bool(false))),
             TokenType::Nil => Ok(Expr::Literal(LiteralValue::Nil)),
             TokenType::Number => {
-                let value = tokens[0].2.parse::<f64>().unwrap();
+                let value = tokens[0].2.parse::<f64>().map_err(|e| e.to_string())?;
                 Ok(Expr::Literal(LiteralValue::Number(value)))
-            }
+            },
             TokenType::String => {
                 let value = tokens[0].2.clone();
                 Ok(Expr::Literal(LiteralValue::String(value)))
-            }
+            },
             _ => Err(format!("Unexpected token: {:?}", tokens[0])),
         }
     }
