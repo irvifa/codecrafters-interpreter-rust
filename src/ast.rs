@@ -4,6 +4,7 @@ use std::fmt;
 pub enum Expr {
     Literal(LiteralValue),
     // We'll add more expression types later
+    Grouping(Box<Expr>),
 }
 
 pub enum LiteralValue {
@@ -17,6 +18,7 @@ impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Expr::Literal(value) => write!(f, "{}", value),
+            Expr::Grouping(expr) => write!(f, "(group {})", expr),
         }
     }
 }

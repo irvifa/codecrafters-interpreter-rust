@@ -4,12 +4,18 @@ use crate::tokenizer::{TokenType, Scanner};
 
 pub struct Parser<'a> {
     scanner: Scanner<'a>,
+    current: usize,
+    tokens: Vec<(TokenType, String, String)>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().to_vec();
         Parser {
-            scanner: Scanner::new(source),
+            scanner,
+            current: 0,
+            tokens,
         }
     }
 
@@ -18,28 +24,87 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-        self.literal()
+        self.primary()
     }
 
-    fn literal(&mut self) -> Result<Expr, String> {
-        let tokens = self.scanner.scan_tokens();
-        if tokens.is_empty() {
+    fn primary(&mut self) -> Result<Expr, String> {
+        if self.match_token(&[TokenType::LeftParen]) {
+            let expr = self.expression()?;
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
+            return Ok(Expr::Grouping(Box::new(expr)));
+        }
+
+        if self.is_at_end() {
             return Err("Unexpected end of input".to_string());
         }
 
-        match &tokens[0].0 {
-            TokenType::True => Ok(Expr::Literal(LiteralValue::Bool(true))),
-            TokenType::False => Ok(Expr::Literal(LiteralValue::Bool(false))),
-            TokenType::Nil => Ok(Expr::Literal(LiteralValue::Nil)),
+        match &self.peek().0 {
+            TokenType::True => {
+                self.advance();
+                Ok(Expr::Literal(LiteralValue::Bool(true)))
+            },
+            TokenType::False => {
+                self.advance();
+                Ok(Expr::Literal(LiteralValue::Bool(false)))
+            },
+            TokenType::Nil => {
+                self.advance();
+                Ok(Expr::Literal(LiteralValue::Nil))
+            },
             TokenType::Number => {
-                let value = tokens[0].2.parse::<f64>().map_err(|e| e.to_string())?;
+                let value = self.advance().2.parse::<f64>().map_err(|e| e.to_string())?;
                 Ok(Expr::Literal(LiteralValue::Number(value)))
             },
             TokenType::String => {
-                let value = tokens[0].2.clone();
+                let value = self.advance().2.clone();
                 Ok(Expr::Literal(LiteralValue::String(value)))
             },
-            _ => Err(format!("Unexpected token: {:?}", tokens[0])),
+            _ => Err(format!("Unexpected token: {:?}", self.peek())),
         }
+    }
+
+    fn match_token(&mut self, types: &[TokenType]) -> bool {
+        for t in types {
+            if self.check(t) {
+                self.advance();
+                return true;
+            }
+        }
+        false
+    }
+
+    fn consume(&mut self, t: TokenType, message: &str) -> Result<&(TokenType, String, String), String> {
+        if self.check(&t) {
+            Ok(self.advance())
+        } else {
+            Err(message.to_string())
+        }
+    }
+
+    fn check(&self, t: &TokenType) -> bool {
+        if self.is_at_end() {
+            false
+        } else {
+            &self.peek().0 == t
+        }
+    }
+
+    fn advance(&mut self) -> &(TokenType, String, String) {
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.peek().0 == TokenType::Eof
+    }
+
+    fn peek(&self) -> &(TokenType, String, String) {
+        &self.tokens[self.current]
+    }
+
+    fn previous(&self) -> &(TokenType, String, String) {
+        &self.tokens[self.current - 1]
     }
 }
