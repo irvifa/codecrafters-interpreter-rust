@@ -25,6 +25,10 @@ pub enum TokenType {
     Number,
     Identifier,
     Eof,
+
+    // Reserved words
+    And, Class, Else, False, For, Fun, If, Nil, Or,
+    Print, Return, Super, This, True, Var, While,
 }
 
 impl std::fmt::Display for TokenType {
@@ -53,6 +57,22 @@ impl std::fmt::Display for TokenType {
             TokenType::Number => write!(f, "NUMBER"),
             TokenType::Identifier => write!(f, "IDENTIFIER"),
             TokenType::Eof => write!(f, "EOF  null"),
+            TokenType::And => write!(f, "AND and null"),
+            TokenType::Class => write!(f, "CLASS class null"),
+            TokenType::Else => write!(f, "ELSE else null"),
+            TokenType::False => write!(f, "FALSE false null"),
+            TokenType::For => write!(f, "FOR for null"),
+            TokenType::Fun => write!(f, "FUN fun null"),
+            TokenType::If => write!(f, "IF if null"),
+            TokenType::Nil => write!(f, "NIL nil null"),
+            TokenType::Or => write!(f, "OR or null"),
+            TokenType::Print => write!(f, "PRINT print null"),
+            TokenType::Return => write!(f, "RETURN return null"),
+            TokenType::Super => write!(f, "SUPER super null"),
+            TokenType::This => write!(f, "THIS this null"),
+            TokenType::True => write!(f, "TRUE true null"),
+            TokenType::Var => write!(f, "VAR var null"),
+            TokenType::While => write!(f, "WHILE while null"),
         }
     }
 }
@@ -286,12 +306,35 @@ impl<'a> Scanner<'a> {
         c.is_alphanumeric() || c == '_'
     }
 
+    fn identifier_type(&self, identifier: &str) -> TokenType {
+        match identifier {
+            "and" => TokenType::And,
+            "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "for" => TokenType::For,
+            "fun" => TokenType::Fun,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
+            _ => TokenType::Identifier,
+        }
+    }
+
     fn identifier(&mut self) {
         while self.peek().map_or(false, |c| self.is_alphanumeric(c)) {
             self.advance();
         }
     
         let text = &self.source[self.start..self.current];
-        self.add_token(TokenType::Identifier);
+        let token_type = self.identifier_type(text);
+        self.add_token(token_type);
     }
 }
