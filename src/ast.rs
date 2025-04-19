@@ -10,6 +10,7 @@ pub enum Expr {
     Binary(Box<Expr>, TokenType, Box<Expr>),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum LiteralValue {
     Number(f64),
     String(String),

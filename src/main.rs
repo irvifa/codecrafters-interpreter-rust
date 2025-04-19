@@ -1,8 +1,11 @@
 mod ast;
 mod ast_printer;
+mod interpreter;
 mod parser;
 mod tokenizer;
+
 use crate::ast_printer::AstPrinter;
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::tokenizer::{Scanner, TokenType};
 use std::env;
@@ -48,6 +51,20 @@ fn main() {
             match parser.parse() {
                 Ok(expr) => {
                     println!("{}", AstPrinter::print(&expr));
+                }
+                Err(e) => {
+                    writeln!(io::stderr(), "Error: {}", e).unwrap();
+                    std::process::exit(65);
+                }
+            }
+        }
+        "evaluate" => {
+            let mut parser = Parser::new(&file_contents);
+            match parser.parse() {
+                Ok(expr) => {
+                    let interpreter = Interpreter;
+                    let result = interpreter.evaluate(expr);
+                    println!("{}", result);
                 }
                 Err(e) => {
                     writeln!(io::stderr(), "Error: {}", e).unwrap();
