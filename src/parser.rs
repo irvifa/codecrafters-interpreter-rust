@@ -31,7 +31,16 @@ impl<'a> Parser<'a> {
     fn term(&mut self) -> Result<Expr, String> {
         let mut expr = self.factor()?;
 
-        while self.match_token(&[TokenType::Minus, TokenType::Plus, TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual]) {
+        while self.match_token(&[
+            TokenType::Minus,
+            TokenType::Plus,
+            TokenType::LessEqual,
+            TokenType::Less,
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::EqualEqual,
+            TokenType::BangEqual,
+        ]) {
             let operator = self.previous().0.clone();
             let right = self.factor()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));

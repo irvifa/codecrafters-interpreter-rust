@@ -374,6 +374,8 @@ impl TokenType {
             TokenType::Number => "NUMBER".to_string(),
             TokenType::LessEqual => "<=".to_string(),
             TokenType::GreaterEqual => ">=".to_string(),
+            TokenType::EqualEqual => "==".to_string(),
+            TokenType::BangEqual => "!=".to_string(),
             // ... (other matches)
             _ => format!("{:?}", self),
         }
