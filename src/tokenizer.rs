@@ -364,6 +364,7 @@ impl TokenType {
         match self {
             TokenType::Bang => "!".to_string(),
             TokenType::Minus => "-".to_string(),
+            TokenType::Plus => "+".to_string(),
             TokenType::Star => "*".to_string(),
             TokenType::Slash => "/".to_string(),
             TokenType::Bang => "!".to_string(),
