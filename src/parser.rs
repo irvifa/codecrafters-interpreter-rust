@@ -24,7 +24,32 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-        self.unary()
+        self.term()
+    }
+    
+    // term -> factor ( ( "+" | "-" ) factor )*
+    fn term(&mut self) -> Result<Expr, String> {
+        let mut expr = self.factor()?;
+    
+        while self.match_token(&[TokenType::Minus, TokenType::Plus]) {
+            let operator = self.previous().0.clone();
+            let right = self.factor()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+    
+        Ok(expr)
+    }
+
+    fn factor(&mut self) -> Result<Expr, String> {
+        let mut expr = self.unary()?;
+    
+        while self.match_token(&[TokenType::Slash, TokenType::Star]) {
+            let operator = self.previous().0.clone();
+            let right = self.unary()?;
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+    
+        Ok(expr)
     }
 
     fn unary(&mut self) -> Result<Expr, String> {

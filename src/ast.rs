@@ -7,6 +7,7 @@ pub enum Expr {
     // We'll add more expression types later
     Grouping(Box<Expr>),
     Unary(TokenType, Box<Expr>),
+    Binary(Box<Expr>, TokenType, Box<Expr>),
 }
 
 pub enum LiteralValue {
@@ -22,6 +23,7 @@ impl fmt::Display for Expr {
             Expr::Literal(value) => write!(f, "{}", value),
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Unary(operator, expr) => write!(f, "({} {})", operator.to_string_for_parse(), expr),
+            Expr::Binary(left, operator, right) => write!(f, "({} {} {})", operator.to_string_for_parse(), left, right),
         }
     }
 }

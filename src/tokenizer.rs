@@ -267,32 +267,34 @@ impl<'a> Scanner<'a> {
             self.advance();
         }
     
-        // Look for a fractional part.
         let mut has_decimal = false;
         if self.peek() == Some('.') && self.peek_next().map_or(false, |c| self.is_digit(c)) {
             has_decimal = true;
-            // Consume the "."
-            self.advance();
-    
+            self.advance(); // consume the "."
             while self.peek().map_or(false, |c| self.is_digit(c)) {
                 self.advance();
             }
         }
     
         let value = &self.source[self.start..self.current];
-        let lexeme = value.to_string();
         let literal = if has_decimal {
-            if value.ends_with(".00") {
-                value.trim_end_matches('0').to_string() + "0"
+            // Ensure we keep one decimal place at least
+            let trimmed_value = value.trim_end_matches('0');
+            if trimmed_value.ends_with('.') {
+                format!("{}0", trimmed_value) // Handle cases like 200.0
             } else {
-                value.to_string()
+                trimmed_value.to_string()
             }
         } else {
+            // Add ".0" to whole numbers
             format!("{}.0", value)
         };
-
-        self.add_token_with_literal(TokenType::Number, lexeme, literal);
+    
+        self.add_token_with_literal(TokenType::Number, value.to_string(), literal);
     }
+    
+    
+    
 
     fn is_digit(&self, c: char) -> bool {
         c >= '0' && c <= '9'
@@ -345,6 +347,13 @@ impl TokenType {
         match self {
             TokenType::Bang => "!".to_string(),
             TokenType::Minus => "-".to_string(),
+            TokenType::Star => "*".to_string(),
+            TokenType::Slash => "/".to_string(),
+            TokenType::Bang => "!".to_string(),
+            TokenType::Equal => "=".to_string(),
+            TokenType::Less => "<".to_string(),
+            TokenType::Greater => ">".to_string(),
+            TokenType::Number => "NUMBER".to_string(),
             // ... (other matches)
             _ => format!("{:?}", self),
         }
