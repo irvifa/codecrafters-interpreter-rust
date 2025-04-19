@@ -27,8 +27,22 @@ pub enum TokenType {
     Eof,
 
     // Reserved words
-    And, Class, Else, False, For, Fun, If, Nil, Or,
-    Print, Return, Super, This, True, Var, While,
+    And,
+    Class,
+    Else,
+    False,
+    For,
+    Fun,
+    If,
+    Nil,
+    Or,
+    Print,
+    Return,
+    Super,
+    This,
+    True,
+    Var,
+    While,
 }
 
 impl std::fmt::Display for TokenType {
@@ -103,18 +117,20 @@ impl<'a> Scanner<'a> {
             self.start = self.current;
             self.scan_token();
         }
-    
+
         // Only add EOF token if all tokens have been processed
         if let Some(&(ref last_type, _, _)) = self.tokens.last() {
             if *last_type != TokenType::Eof {
-                self.tokens.push((TokenType::Eof, String::new(), String::new()));
+                self.tokens
+                    .push((TokenType::Eof, String::new(), String::new()));
             }
         } else {
-            self.tokens.push((TokenType::Eof, String::new(), String::new()));
+            self.tokens
+                .push((TokenType::Eof, String::new(), String::new()));
         }
-    
+
         &self.tokens
-    }    
+    }
 
     fn scan_token(&mut self) {
         let c = self.advance().unwrap_or('\0');
@@ -177,9 +193,8 @@ impl<'a> Scanner<'a> {
             _ if self.is_digit(c) => self.number(),
             _ if self.is_alpha(c) => self.identifier(),
             _ => {
-                    self.report_error(c);
-                    self.has_errors = true;
-                
+                self.report_error(c);
+                self.has_errors = true;
             }
         }
     }
@@ -235,7 +250,8 @@ impl<'a> Scanner<'a> {
         writeln!(
             io::stderr(),
             "[line {}] Error: Unexpected character: {}",
-            self.line, c
+            self.line,
+            c
         )
         .unwrap();
     }
@@ -249,7 +265,12 @@ impl<'a> Scanner<'a> {
         }
 
         if self.is_at_end() {
-            writeln!(io::stderr(), "[line {}] Error: Unterminated string.", self.line).unwrap();
+            writeln!(
+                io::stderr(),
+                "[line {}] Error: Unterminated string.",
+                self.line
+            )
+            .unwrap();
             self.has_errors = true;
             return;
         }
@@ -266,7 +287,7 @@ impl<'a> Scanner<'a> {
         while self.peek().map_or(false, |c| self.is_digit(c)) {
             self.advance();
         }
-    
+
         let mut has_decimal = false;
         if self.peek() == Some('.') && self.peek_next().map_or(false, |c| self.is_digit(c)) {
             has_decimal = true;
@@ -275,7 +296,7 @@ impl<'a> Scanner<'a> {
                 self.advance();
             }
         }
-    
+
         let value = &self.source[self.start..self.current];
         let literal = if has_decimal {
             // Ensure we keep one decimal place at least
@@ -289,21 +310,18 @@ impl<'a> Scanner<'a> {
             // Add ".0" to whole numbers
             format!("{}.0", value)
         };
-    
+
         self.add_token_with_literal(TokenType::Number, value.to_string(), literal);
     }
-    
-    
-    
 
     fn is_digit(&self, c: char) -> bool {
         c >= '0' && c <= '9'
     }
-    
+
     fn is_alpha(&self, c: char) -> bool {
         c.is_alphabetic() || c == '_'
     }
-    
+
     fn is_alphanumeric(&self, c: char) -> bool {
         c.is_alphanumeric() || c == '_'
     }
@@ -334,13 +352,12 @@ impl<'a> Scanner<'a> {
         while self.peek().map_or(false, |c| self.is_alphanumeric(c)) {
             self.advance();
         }
-    
+
         let text = &self.source[self.start..self.current];
         let token_type = self.identifier_type(text);
         self.add_token(token_type);
     }
 }
-
 
 impl TokenType {
     pub fn to_string_for_parse(&self) -> String {

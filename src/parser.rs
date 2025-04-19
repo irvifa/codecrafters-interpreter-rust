@@ -1,6 +1,6 @@
 // parser.rs
 use crate::ast::{Expr, LiteralValue};
-use crate::tokenizer::{TokenType, Scanner};
+use crate::tokenizer::{Scanner, TokenType};
 
 pub struct Parser<'a> {
     scanner: Scanner<'a>,
@@ -26,29 +26,29 @@ impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Expr, String> {
         self.term()
     }
-    
+
     // term -> factor ( ( "+" | "-" ) factor )*
     fn term(&mut self) -> Result<Expr, String> {
         let mut expr = self.factor()?;
-    
+
         while self.match_token(&[TokenType::Minus, TokenType::Plus]) {
             let operator = self.previous().0.clone();
             let right = self.factor()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-    
+
         Ok(expr)
     }
 
     fn factor(&mut self) -> Result<Expr, String> {
         let mut expr = self.unary()?;
-    
+
         while self.match_token(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.previous().0.clone();
             let right = self.unary()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-    
+
         Ok(expr)
     }
 
@@ -77,23 +77,23 @@ impl<'a> Parser<'a> {
             TokenType::True => {
                 self.advance();
                 Ok(Expr::Literal(LiteralValue::Bool(true)))
-            },
+            }
             TokenType::False => {
                 self.advance();
                 Ok(Expr::Literal(LiteralValue::Bool(false)))
-            },
+            }
             TokenType::Nil => {
                 self.advance();
                 Ok(Expr::Literal(LiteralValue::Nil))
-            },
+            }
             TokenType::Number => {
                 let value = self.advance().2.parse::<f64>().map_err(|e| e.to_string())?;
                 Ok(Expr::Literal(LiteralValue::Number(value)))
-            },
+            }
             TokenType::String => {
                 let value = self.advance().2.clone();
                 Ok(Expr::Literal(LiteralValue::String(value)))
-            },
+            }
             _ => Err(format!("Unexpected token: {:?}", self.peek())),
         }
     }
@@ -108,7 +108,11 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn consume(&mut self, t: TokenType, message: &str) -> Result<&(TokenType, String, String), String> {
+    fn consume(
+        &mut self,
+        t: TokenType,
+        message: &str,
+    ) -> Result<&(TokenType, String, String), String> {
         if self.check(&t) {
             Ok(self.advance())
         } else {
